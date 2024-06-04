@@ -51,7 +51,6 @@ public class MainView {
     private ComboBox<String> chooseNation;
     private Connection connection;
 
-
     public void logOut(ActionEvent event) {
         currentUser = null;
 
@@ -60,7 +59,6 @@ public class MainView {
 
         openLoginWindow();
     }
-
 
     private void openLoginWindow() {
         try {
@@ -74,7 +72,6 @@ public class MainView {
             e.printStackTrace();
         }
     }
-
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
@@ -92,6 +89,7 @@ public class MainView {
             }
         }
     }
+
     public void fetchNations() throws SQLException {
         connection = ConnectDB.getConnection();
         String query = "SELECT nation_id, nation_name FROM nationality";
@@ -99,7 +97,7 @@ public class MainView {
         ResultSet resultSet = statement.executeQuery();
 
         ObservableList<String> nacje = FXCollections.observableArrayList();
-        while (resultSet.next()){
+        while (resultSet.next()) {
             nacje.add(resultSet.getInt("nation_id") + ": " + resultSet.getString("nation_name"));
         }
         chooseNation.setItems(nacje);
@@ -112,13 +110,12 @@ public class MainView {
         ResultSet resultSet = statement.executeQuery();
 
         ObservableList<String> muzeum = FXCollections.observableArrayList();
-        while (resultSet.next()){
+        while (resultSet.next()) {
             muzeum.add(resultSet.getInt("museum_id") + ": " + resultSet.getString("name"));
         }
 
         chooseMuseum.setItems(muzeum);
     }
-
 
     @FXML
     public void filterByMuseum() {
@@ -128,19 +125,28 @@ public class MainView {
             museumId = selectedMuseum.split(":")[0];
         }
         String searchQuery = SearchBar.getText();
-        loadContent(museumId, searchQuery);
+        String selectedNation = chooseNation.getSelectionModel().getSelectedItem();
+        String nationId = null;
+        if (selectedNation != null && !selectedNation.isEmpty()) {
+            nationId = selectedNation.split(":")[0];
+        }
+        loadContent(museumId, searchQuery, nationId);
     }
-
 
     @FXML
     void filterByNation(ActionEvent event) {
         String selectedNation = chooseNation.getSelectionModel().getSelectedItem();
-        String nationID = null;
+        String nationId = null;
         if (selectedNation != null && !selectedNation.isEmpty()) {
-            nationID = selectedNation.split(":")[0];
+            nationId = selectedNation.split(":")[0];
         }
         String searchQuery = SearchBar.getText();
-        loadContent(nationID, searchQuery);
+        String selectedMuseum = chooseMuseum.getSelectionModel().getSelectedItem();
+        String museumId = null;
+        if (selectedMuseum != null && !selectedMuseum.isEmpty()) {
+            museumId = selectedMuseum.split(":")[0];
+        }
+        loadContent(museumId, searchQuery, nationId);
     }
 
     @FXML
@@ -151,24 +157,25 @@ public class MainView {
             museumId = selectedMuseum.split(":")[0];
         }
         String searchQuery = SearchBar.getText();
-        loadContent(museumId, searchQuery);
+        String selectedNation = chooseNation.getSelectionModel().getSelectedItem();
+        String nationId = null;
+        if (selectedNation != null && !selectedNation.isEmpty()) {
+            nationId = selectedNation.split(":")[0];
+        }
+        loadContent(museumId, searchQuery, nationId);
         System.out.println("odswiezono");
     }
-
-
 
     @FXML
     private void initialize() throws SQLException {
         fetchMuseums();
         fetchNations();
-        loadContent(null, "");
+        loadContent(null, "", null);
 
         SearchBar.setOnKeyReleased(event -> filterBySearchQuery());
     }
 
-
-
-    private void loadContent(String museumId, String searchQuery) {
+    private void loadContent(String museumId, String searchQuery, String nationId) {
         int column = 0;
         int row = 1;
         try {
@@ -182,6 +189,14 @@ public class MainView {
 
             if (museumId != null && !museumId.isEmpty()) {
                 sql += " JOIN museum_tanks ON tanks.tank_id = museum_tanks.tank_id WHERE museum_tanks.museum_id = " + museumId;
+                if (nationId != null && !nationId.isEmpty()) {
+                    sql += " AND tanks.nation_id = " + nationId;
+                }
+                if (searchQuery != null && !searchQuery.isEmpty()) {
+                    sql += " AND tanks.name LIKE '%" + searchQuery + "%'";
+                }
+            } else if (nationId != null && !nationId.isEmpty()) {
+                sql += " WHERE tanks.nation_id = " + nationId;
                 if (searchQuery != null && !searchQuery.isEmpty()) {
                     sql += " AND tanks.name LIKE '%" + searchQuery + "%'";
                 }
@@ -214,6 +229,7 @@ public class MainView {
             e.printStackTrace();
         }
     }
+
     @FXML
     private void filterBySearchQuery() {
         String selectedMuseum = chooseMuseum.getSelectionModel().getSelectedItem();
@@ -222,9 +238,21 @@ public class MainView {
             museumId = selectedMuseum.split(":")[0];
         }
         String searchQuery = SearchBar.getText();
-        loadContent(museumId, searchQuery);
+        String selectedNation = chooseNation.getSelectionModel().getSelectedItem();
+        String nationId = null;
+        if (selectedNation != null && !selectedNation.isEmpty()) {
+            nationId = selectedNation.split(":")[0];
+        }
+        loadContent(museumId, searchQuery, nationId);
     }
 
+    @FXML
+    void resetContent(MouseEvent event) {
+        chooseMuseum.getSelectionModel().clearSelection();
+        chooseNation.getSelectionModel().clearSelection();
+        SearchBar.clear();
+        loadContent(null, "", null);
+    }
 
 
     @FXML
@@ -241,7 +269,6 @@ public class MainView {
         }
     }
 
-
     @FXML
     public void addNation() {
         try {
@@ -255,7 +282,6 @@ public class MainView {
             e.printStackTrace();
         }
     }
-
 
     @FXML
     public void addAmmo(){
@@ -271,7 +297,6 @@ public class MainView {
         }
     }
 
-
     @FXML
     void showNations(MouseEvent event) {
         try {
@@ -285,7 +310,6 @@ public class MainView {
             e.printStackTrace();
         }
     }
-
 
     @FXML
     void showUsers(MouseEvent event) {
